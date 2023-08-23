@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const loginService = async (req: Request, res: Response) => {
+export const loginService = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     const secret = process.env.JWT_SECRET as string | undefined;
 
@@ -26,5 +26,18 @@ const loginService = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error while logging in' });
     }
   };
+
+
+export const registerService = async (req: Request, res: Response) => {
+    req.body.password = await bcrypt.hash( req.body.password, 10);
+
+    try {
+        const user = await dataSource.getRepository(User).create(req.body)
+        await dataSource.getRepository(User).save(user)
+        res.status(201).json({ message: 'User registered successfully'});
+    
+    } catch (error) {
+        res.status(500).json({ message: 'Error while registering user' });
+    }
+};
   
-  export default loginService;

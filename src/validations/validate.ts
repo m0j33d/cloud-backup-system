@@ -36,7 +36,7 @@ export const loginValidation = () => {
             .withMessage('Please enter a valid email.')        
             .normalizeEmail(),
         body('password')
-            .isLength({ min: 8 })
+            .isLength({ min: 7 })
             .isAlphanumeric()
             .trim(),
     ]
