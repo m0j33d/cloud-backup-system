@@ -19,7 +19,8 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     }
 
     // If token is valid, attach the decoded payload to the request object
-    (req as any).decoded = decoded;
+    (req as any).user = decoded;
+
     next();
   });
 };
