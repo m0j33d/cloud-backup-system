@@ -8,12 +8,10 @@ const registerService = async (req: Request, res: Response) => {
 
     try {
         const user = await dataSource.getRepository(User).create(req.body)
-        const results = await dataSource.getRepository(User).save(user)
-        console.log(results);
+        await dataSource.getRepository(User).save(user)
         res.status(201).json({ message: 'User registered successfully'});
     
     } catch (error) {
-        console.log(error)
         res.status(500).json({ message: 'Error while registering user' });
     }
   };
