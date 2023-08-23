@@ -5,9 +5,6 @@ import {
     download,
     createFolder
 } from '../controllers/file.controller'
-import authenticate from '../middleware/authenticate'
-import { registerValidation, loginValidation, validate } from "../validations/validate"
-
 
 const fileRouter = express.Router();
 
