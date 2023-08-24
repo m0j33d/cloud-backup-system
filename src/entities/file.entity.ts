@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
 import { User } from './users.entity';
+import { Folder } from "./folder.entity";
 
 export enum FileStatus {
     SAFE = 'safe',
@@ -20,10 +21,10 @@ export class File {
     @Column()
     userId: number;
 
-    @Column()
+    @Column({ unique: true })
     publicId: string
 
-    @Column()
+    @Column({ unique: true })
     url: string
 
     @Column()
@@ -36,19 +37,27 @@ export class File {
     })
     status: FileStatus;
 
+    @Column('text', { array: true, nullable: true })
+    markedBy: string[];
+
     @CreateDateColumn()
-        created_at: Date;
+    created_at: Date;
 
     @UpdateDateColumn()
-        updated_at: Date;
+    updated_at: Date;
 
     @Column({ type: 'timestamp', nullable: true })
-        deleted_at: Date;
+    deleted_at: Date;
         
     // Method for soft deletion
     softDelete() {
         this.deleted_at = new Date();
     }
+
+    @ManyToOne(() => Folder, {
+        nullable: true
+    })
+    'folder': Folder;
 
     // Define the many-to-one relationship with User
     @ManyToOne(() => User, (user) => user.file)

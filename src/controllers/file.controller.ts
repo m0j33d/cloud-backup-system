@@ -2,10 +2,10 @@ import { Request, Response } from 'express';
 import { 
     uploadService, 
     downloadService, 
-    createFolderService,
     markAsUnsafeAndDeleteService,
     getAllUploadsService,
-    streamVideoAndAudioService
+    streamVideoAndAudioService,
+    getUserFileHistoryService
  } from '../services/file/file.service'
 
 export const upload = async (req: Request, res: Response) => {
@@ -14,10 +14,6 @@ export const upload = async (req: Request, res: Response) => {
 
 export const download = async (req: Request, res: Response) => {
     await downloadService(req, res);
-};
-
-export const createFolder = async (req: Request, res: Response) => {
-    await createFolderService(req, res);
 };
 
 export const markAsUnsafeAndDelete = async (req: Request, res: Response) => {
@@ -30,4 +26,8 @@ export const getAllUploads = async (req: Request, res: Response) => {
 
 export const streamMedia = async (req: Request, res: Response) => {
     await streamVideoAndAudioService(req, res);
+};
+
+export const getUserFileHistory = async (req: Request, res: Response) => {
+    await getUserFileHistoryService(req, res);
 };
