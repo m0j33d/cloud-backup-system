@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import cloudinary from '../config/cloudinary-config';
+import cloudinary from '../config/cloudinary';
 import dotenv from "dotenv";
 import { Folder } from "../entities/folder.entity";
 import { User } from "../entities/users.entity";

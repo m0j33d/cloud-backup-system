@@ -8,7 +8,7 @@ const sessionRepository = dataSource.getRepository(Session);
 
 export const updateOrCreateUserSession = async (user: User, status: any) => {
 
-    let session = await sessionRepository.findOneBy(user);
+    let session = await sessionRepository.findOneBy({ user } as object);
 
     if (!session)
         session = await sessionRepository.create({ user })

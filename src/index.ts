@@ -3,6 +3,8 @@ import fileupload from "express-fileupload";
 import cors from 'cors'
 
 import Router from "./routes";
+import { rateLimiter } from "./middleware/rate-limiter"
+import { RootExceptionHandler } from "./exceptions/RootExceptionHandler"
 
 
 
@@ -16,7 +18,11 @@ app.use(
 );
 app.use(fileupload({ useTempFiles: true }));
 
+app.use(rateLimiter);
+
 app.use(Router);
+
+app.use(RootExceptionHandler);
 
 /** Get port from environment and store in Express. */
 const port = process.env.PORT || "3000";

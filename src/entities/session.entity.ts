@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToOne, JoinColumn } from 'typeorm';
 import { User } from './users.entity';
 
 export enum SessionStatus {
@@ -23,5 +23,6 @@ export class Session {
 
     // Define the one-to-one relationship with User
     @OneToOne(() => User)
+    @JoinColumn()
     user: User;
 }

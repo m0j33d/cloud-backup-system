@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import cloudinary from '../config/cloudinary-config';
+import cloudinary from '../config/cloudinary';
 import dotenv from "dotenv";
 import { UploadedFile } from 'express-fileupload';
 import { File, FileStatus } from "../entities/file.entity";
