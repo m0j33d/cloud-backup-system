@@ -11,19 +11,19 @@ import { Session } from "../src/entities/session.entity";
 describe('User Authentication', () => {
 
   describe('Login Service', () => {
-    let userRepositoryMock: any;
+    let userFindMock: any;
     let sessionCreateMock: any;
     let sessionSaveMock: any;
   
     beforeEach(() => {
-      userRepositoryMock = sinon.stub(dataSource.getRepository(User), 'findOneBy'); 
+      userFindMock = sinon.stub(dataSource.getRepository(User), 'findOneBy'); 
       sessionCreateMock = sinon.stub(dataSource.getRepository(Session), 'create');
       sessionSaveMock = sinon.stub(dataSource.getRepository(Session), 'save');
     });
   
     afterEach(() => {
       // Restoring the original userRepository function
-      userRepositoryMock.restore(); 
+      userFindMock.restore(); 
       sessionCreateMock.restore(); 
       sessionSaveMock.restore();
     });
@@ -36,7 +36,7 @@ describe('User Authentication', () => {
       };
   
       // Mocking the behavior of userRepository.findOneBy to return a user
-      userRepositoryMock.resolves({ id: 1, email: 'user@example.com', password: hashedPassword });
+      userFindMock.resolves({ id: 1, email: 'user@example.com', password: hashedPassword });
       sessionCreateMock.resolves({});
       sessionSaveMock.resolves({});
   
@@ -55,7 +55,7 @@ describe('User Authentication', () => {
       };
   
       // Mocking the behavior of userRepository.findOneBy to return null
-      userRepositoryMock.resolves(null);
+      userFindMock.resolves(null);
   
       const response = await request(app)
         .post('/api/auth/login')
@@ -72,7 +72,7 @@ describe('User Authentication', () => {
       };
   
       // Mocking userRepository.findOneBy to throw an error
-      userRepositoryMock.throws(new Error('Database error'));
+      userFindMock.throws(new Error('Database error'));
   
       const response = await request(app)
         .post('/api/auth/login')
@@ -83,6 +83,82 @@ describe('User Authentication', () => {
     });
   });
 
+  describe('Register Service', () => {
+    let userCreateMock: any;
+    let userSaveMock: any;
+    let userFindMock: any;
   
+    beforeEach(() => {
+      userFindMock = sinon.stub(dataSource.getRepository(User), 'findOneBy'); 
+      userCreateMock = sinon.stub(dataSource.getRepository(User), 'create'); 
+      userSaveMock = sinon.stub(dataSource.getRepository(User), 'save'); 
+    });
+  
+    afterEach(() => {
+      // Restoring the original userRepository function
+      userCreateMock.restore(); 
+      userSaveMock.restore(); 
+      userFindMock.restore(); 
+    });
+  
+    it('should return a 201 status on successful registration', async () => {
+      const userData = {
+        email: 'newuser@email.com',
+        password: 'Password123',
+        fullName: 'Odumodo blvck'
+      };
+  
+      // Mocking the behavior of userRepository.create and userRepository.save
+      userCreateMock.resolves(userData);
+      userSaveMock.resolves({});
+      userFindMock.resolves(null);
+
+  
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(userData);
+  
+      expect(response.status).to.equal(201);
+      expect(response.body).to.have.property('message', 'User registered successfully');
+    });
+
+    it('should return a 400 status on validation error', async () => {
+      const userData = {
+        email: 'newusercom', // Invalid email
+        password: 'password123',
+        fullName: 'Odumodo blvck'
+      };
+  
+      // Mocking the behavior of userRepository.create and userRepository.save
+      userCreateMock.resolves(userData);
+      userSaveMock.resolves({});
+  
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(userData);
+  
+      expect(response.status).to.equal(400);
+    });
+  
+    it('should return a 500 status on server error', async () => {
+      const userData = {
+        email: 'newuser@example.com',
+        password: 'Password123',
+        fullName: 'Odumodo blvck'
+      };
+  
+      // Mocking userRepository.create to throw an error
+      userCreateMock.throws(new Error('Database error'));
+      userFindMock.resolves(null);
+
+      const response = await request(app)
+      .post('/api/auth/register')
+      .send(userData);
+  
+      expect(response.status).to.equal(500);
+      expect(response.body).to.have.property('error', 'Error while registering user');
+    });
+  });
+
 })
 
