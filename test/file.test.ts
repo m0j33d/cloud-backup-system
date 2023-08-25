@@ -4,73 +4,133 @@ import sinon from 'sinon';
 import * as jwt from 'jsonwebtoken';
 import cloudinary from '../src/config/cloudinary';
 import app from '../src/index';
-import dataSource from '../src/data-source'
+import fs from 'fs';
+import dataSource from '../src/data-source';
 import { User } from "../src/entities/users.entity";
-import { Folder } from "../src/entities/folder.entity";
 import { File } from "../src/entities/file.entity";
 
 
-describe('Folder Routes', () => {
+
+describe('File Routes', () => {
   const secret = process.env.JWT_SECRET as string | undefined;
   const authToken = jwt.sign({ userId: 1 }, `${secret}`, { expiresIn: '8h' });
 
-  describe.only('Create a folder', () => {
+  describe('Upload Service', () => {
     let userFindMock: any;
-    let folderCreateMock: any;
-    let folderSaveMock: any;
-    let cloudinaryApiCreateFolderStub: any;
+    let fileCreateMock: any;
+    let fileSaveMock: any;
+    let cloudinaryUploaderUploadStub: any;
+
 
     beforeEach(() => {
       userFindMock = sinon.stub(dataSource.getRepository(User), 'findOneBy');
-      folderCreateMock = sinon.stub(dataSource.getRepository(Folder), 'create');
-      folderSaveMock = sinon.stub(dataSource.getRepository(Folder), 'save');
-      cloudinaryApiCreateFolderStub = sinon.stub(cloudinary.api, 'create_folder');
+      fileCreateMock = sinon.stub(dataSource.getRepository(File), 'create');
+      fileSaveMock = sinon.stub(dataSource.getRepository(File), 'save');
+      cloudinaryUploaderUploadStub = sinon.stub(cloudinary.uploader, 'upload');
     });
 
     afterEach(() => {
-      // Restoring the original userRepository function
       userFindMock.restore();
-      folderCreateMock.restore();
-      folderSaveMock.restore();
-      cloudinaryApiCreateFolderStub.restore()
+      fileCreateMock.restore();
+      fileSaveMock.restore();
+      cloudinaryUploaderUploadStub.restore();
     });
 
-    it('should create a folder and return a 201 status', async () => {
-      const folderName = 'NewFolder';
+    it('should upload a file and return a 200 status', async () => {
       const user = { userId: 1 };
-  
-      // Mocking the behavior of cloudinary.api.create_folder
-      cloudinaryApiCreateFolderStub.resolves({ public_id: 'folder123' });
-  
-      // Mocking the behavior of folderRepository.create and folderRepository.save
-      folderCreateMock.resolves({ folderName, slug: 'newfolder', user: user.userId });
-  
+      const uploadDir = './uploads'; // Mock upload directory
+
+      // Simulating file upload
+      const file = {
+        fieldname: 'file',
+        originalname: 'largefile.txt',
+        encoding: '7bit',
+        mimetype: 'text/plain',
+        buffer: Buffer.from("File content"),
+      };
+
+      // Mocking the behavior of cloudinary.uploader.upload to return a result
+      cloudinaryUploaderUploadStub.resolves({ public_id: 'file123', secure_url: 'https://example.com/file123' });
+
+      // Mocking the behavior of userRepository.findOneBy to return a user model
+      userFindMock.resolves({ id: user.userId });
+
+      // Mocking the behavior of fileRepository.create and fileRepository.save
+      fileCreateMock.resolves({ /* your file entity data */ });
+
+      // Create the test upload directory if it doesn't exist
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir);
+      }
+
+      // Simulate writing the uploaded file to the mock upload directory
+      fs.writeFileSync(`${uploadDir}/${file.originalname}`, file.buffer);
+
       const response = await request(app)
-        .post('/api/folder/create')
+        .post('/api/file/upload')
         .set('Authorization', `Bearer ${authToken}`)
-        .send({ folderName });
-  
-      expect(response.status).to.equal(201);
-      expect(response.body).to.have.property('message', 'Folder created');
-      expect(response.body).to.have.property('folder');
+        .attach('file', `${uploadDir}/${file.originalname}`) // Attach the file to the request
+
+      expect(response.status).to.equal(200);
+      expect(response.body).to.have.property('public_id', 'file123');
+      expect(response.body).to.have.property('url', 'https://example.com/file123');
     });
-  
+
+    it('should return a 400 status when no file is selected', async () => {
+      const response = await request(app)
+        .post('/api/file/upload')
+        .set('Authorization', `Bearer ${authToken}`)
+
+      expect(response.status).to.equal(400);
+      expect(response.body).to.have.property('message', 'No File Selected');
+    });
+
+    it('should return a 400 status when file size exceeds the limit', async () => {
+      // Mocking a large file buffer to exceed the limit
+      const largeFile = {
+        fieldname: 'file',
+        originalname: 'largefile.txt',
+        encoding: '7bit',
+        mimetype: 'text/plain',
+        buffer: Buffer.alloc((200 * 1024 * 1024) + 1), // Exceeds the limit
+      };
+
+      const response = await request(app)
+        .post('/api/file/upload')
+        .set('Authorization', `Bearer ${authToken}`)
+        .attach('file', largeFile.buffer, 'largefile.txt') // Attach the large file to the request
+
+      expect(response.status).to.equal(400);
+      expect(response.body).to.have.property('message', 'File size exceeds the maximum allowed limit');
+    });
+
     it('should return a 500 status on server error', async () => {
-      const folderName = 'NewFolder';
-      const user = { userId: 1 };
-  
-      // Mocking the behavior of cloudinary.api.create_folder to throw an error
-      cloudinaryApiCreateFolderStub.yields(new Error('Cloudinary error'), null);
-  
-      const response = await request(app)
-        .post('/api/folder/create')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ folderName });
-  
-      expect(response.status).to.equal(500);
-      expect(response.body).to.have.property('error', 'Could not create the folder.');
-    });
+      // Simulating file upload
+      const file = {
+        fieldname: 'file',
+        originalname: 'test.txt',
+        encoding: '7bit',
+        mimetype: 'text/plain',
+        buffer: Buffer.from('Test file content'), // Simulating file content
+      };
 
+      // Mocking the behavior of cloudinary.uploader.upload to throw an error
+      cloudinaryUploaderUploadStub.throws(new Error('Cloudinary error'));
+
+      // Mocking the behavior of userRepository.findOneBy to return a user model
+      userFindMock.resolves({ id: 1 });
+
+      // Mocking the behavior of fileRepository.create to throw an error
+      fileCreateMock.throws(new Error('Database error'));
+
+      const response = await request(app)
+        .post('/api/file/upload')
+        .set('Authorization', `Bearer ${authToken}`)
+        .attach('file', file.buffer, 'test.txt') // Attach the file to the request
+
+      expect(response.status).to.equal(500);
+      expect(response.body).to.have.property('error', 'Could not upload file.');
+    });
   });
 
 

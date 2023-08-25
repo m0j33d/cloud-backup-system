@@ -57,7 +57,6 @@ export const uploadService = async (req: Request, res: Response) => {
             url: result.secure_url,
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ error: 'Could not upload file.' });
     }
 };
