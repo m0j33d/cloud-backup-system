@@ -8,6 +8,8 @@ import fs from 'fs';
 import dataSource from '../src/data-source';
 import { User } from "../src/entities/users.entity";
 import { File } from "../src/entities/file.entity";
+import { PassThrough } from 'stream';
+import streamRequest from 'request'
 
 
 
@@ -130,6 +132,152 @@ describe('File Routes', () => {
 
       expect(response.status).to.equal(500);
       expect(response.body).to.have.property('error', 'Could not upload file.');
+    });
+  });
+
+  describe('Download Service', () => {
+    let userFindMock: any;
+    let fileFindMock: any;
+    let fileSaveMock: any;
+    let cloudinaryApiResourceStub: any;
+
+    beforeEach(() => {
+      userFindMock = sinon.stub(dataSource.getRepository(User), 'findOneBy');
+      fileFindMock = sinon.stub(dataSource.getRepository(File), 'findOne');
+      fileSaveMock = sinon.stub(dataSource.getRepository(File), 'save');
+      cloudinaryApiResourceStub = sinon.stub(cloudinary.api, 'resource');
+    });
+
+    afterEach(() => {
+      userFindMock.restore();
+      fileFindMock.restore();
+      fileSaveMock.restore();
+      cloudinaryApiResourceStub.restore();
+    });
+
+    it('should redirect to the file URL when file exists and user is authorized', async () => {
+      const fileId = 'file123';
+      const user = { userId: 1 };
+
+      // Mocking the behavior of fileRepository.findOne to return a file
+      fileFindMock.resolves({ userId: user.userId });
+
+      // Mocking the behavior of cloudinary.api.resource to return a result
+      cloudinaryApiResourceStub.resolves({ secure_url: 'https://example.com/file123' });
+
+      const response = await request(app)
+        .get(`/api/file/download/${fileId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+
+      expect(response.status).to.equal(302); // Expecting a redirect
+      expect(response.header.location).to.equal('https://example.com/file123'); // Expecting the redirect URL
+    });
+
+    it('should return a 400 status when the file is not found', async () => {
+      const fileId = 'nonexistent-file-id';
+
+      // Mocking fileRepository.findOne to return null (file not found)
+      fileFindMock.resolves(null);
+
+      const response = await request(app)
+        .get(`/api/file/download/${fileId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+
+      expect(response.status).to.equal(400);
+      expect(response.body).to.have.property('message', 'File not found');
+    });
+
+    it('should return a 403 status when the user is not authorized', async () => {
+      const fileId = 'file123';
+
+      // Mocking the behavior of fileRepository.findOne to return a file with a different user ID
+      fileFindMock.resolves({ userId: 2 });
+
+      const response = await request(app)
+        .get(`/api/file/download/${fileId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+
+      expect(response.status).to.equal(403);
+      expect(response.body).to.have.property('message', 'You are not authorized to download this media');
+    });
+
+    it('should return a 500 status on server error', async () => {
+      const fileId = 'file123';
+
+      // Mocking the behavior of fileRepository.findOne to throw an error
+      fileFindMock.throws(new Error('Database error'));
+
+      const response = await request(app)
+        .get(`/api/file/download/${fileId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+
+      expect(response.status).to.equal(500);
+      expect(response.body).to.have.property('error', 'Could not retrieve the file.');
+    });
+  });
+
+  describe.only('Stream Video and Audio Service', () => {
+    let userFindMock: any;
+    let fileFindMock: any;
+    let fileSaveMock: any;
+    let cloudinaryApiResourceStub: any;
+
+    beforeEach(() => {
+      userFindMock = sinon.stub(dataSource.getRepository(User), 'findOneBy');
+      fileFindMock = sinon.stub(dataSource.getRepository(File), 'findOne');
+      fileSaveMock = sinon.stub(dataSource.getRepository(File), 'save');
+      cloudinaryApiResourceStub = sinon.stub(cloudinary.api, 'resource');
+    });
+
+    afterEach(() => {
+      userFindMock.restore();
+      fileFindMock.restore();
+      fileSaveMock.restore();
+      cloudinaryApiResourceStub.restore();
+    });
+
+
+    it('should return a 400 status when the file is not found', async () => {
+      const fileId = 'nonexistent-file-id';
+
+      // Mocking fileRepository.findOne to return null (file not found)
+      fileFindMock.resolves(null);
+
+      const response = await request(app)
+        .get(`/api/file/stream/${fileId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+
+      expect(response.status).to.equal(400);
+      expect(response.body).to.have.property('message', 'File not found');
+    });
+
+    it('should return a 403 status when the user is not authorized', async () => {
+      const fileId = 'file123';
+
+      // Mocking the behavior of fileRepository.findOne to return a file with a different user ID
+      fileFindMock.resolves({ userId: 2 });
+
+      const response = await request(app)
+        .get(`/api/file/stream/${fileId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+
+      expect(response.status).to.equal(403);
+      expect(response.body).to.have.property('message', 'You are not authorized to stream this media');
+    });
+
+    it('should return a 500 status on server error', async () => {
+      const fileId = 'file123';
+      const user = { userId: 1 };
+
+      // Mocking the behavior of fileRepository.findOne to throw an error
+      fileFindMock.throws(new Error('Database error'));
+
+      const response = await request(app)
+        .get(`/api/file/stream/${fileId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+
+      expect(response.status).to.equal(500);
+      expect(response.body).to.have.property('error', 'Could not stream media.');
     });
   });
 

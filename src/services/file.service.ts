@@ -80,7 +80,6 @@ export const downloadService = async (req: Request, res: Response) => {
         return res.redirect(publicUrl);
 
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ error: 'Could not retrieve the file.' });
     }
 };
@@ -205,7 +204,6 @@ export const streamVideoAndAudioService = async (req: Request, res: Response)  =
         request.get(file.url as string).pipe(res);
 
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ error: 'Could not stream media.' });
     }
 }
