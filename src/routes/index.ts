@@ -9,6 +9,10 @@ import { isAdminMiddleware } from '../middleware/admin'
 
 const router = express.Router();
 
+router.get("/", (req, res) => {
+    res.send("Welcome to Cloud backup API");
+});
+
 router.get("/ping", (req, res) => {
     res.send("pong");
 });
