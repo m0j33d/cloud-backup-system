@@ -14,7 +14,7 @@ describe('Folder Routes', () => {
   const secret = process.env.JWT_SECRET as string | undefined;
   const authToken = jwt.sign({ userId: 1 }, `${secret}`, { expiresIn: '8h' });
 
-  describe('Create a folder', () => {
+  describe.only('Create a folder', () => {
     let userFindMock: any;
     let folderCreateMock: any;
     let folderSaveMock: any;
