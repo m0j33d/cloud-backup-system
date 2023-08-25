@@ -6,7 +6,7 @@ import {
 
 const folderRouter = express.Router();
 
-folderRouter.post("/create-folder", createFolder);
+folderRouter.post("/create", createFolder);
 
 
 export default folderRouter;
