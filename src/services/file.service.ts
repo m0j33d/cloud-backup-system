@@ -1,14 +1,16 @@
 import { Request, Response } from 'express';
-import cloudinary from '../../config/cloudinary-config';
+import cloudinary from '../config/cloudinary';
 import dotenv from "dotenv";
 import { UploadedFile } from 'express-fileupload';
-import { File, FileStatus } from "../../entities/file.entity";
-import { User } from "../../entities/users.entity";
-import dataSource from '../../data-source';
+import { File, FileStatus } from "../entities/file.entity";
+import { User } from "../entities/users.entity";
+import dataSource from '../data-source';
 import request from 'request'
 
 
 dotenv.config();
+const userRepository = dataSource.getRepository(User);
+const fileRepository = dataSource.getRepository(File);
 
 export const uploadService = async (req: Request, res: Response) => {
     const file = req.files?.file as UploadedFile;
@@ -33,7 +35,7 @@ export const uploadService = async (req: Request, res: Response) => {
         });
 
         const user = (req as any).user
-        const userModel = await dataSource.getRepository(User).findOneBy({
+        const userModel = await userRepository.findOneBy({
             id: user.userId,
         } as object)
 
@@ -47,15 +49,14 @@ export const uploadService = async (req: Request, res: Response) => {
             user: userModel
         };
           
-        const fileEntity = dataSource.getRepository(File).create(fileData as object)
-        await dataSource.getRepository(File).save(fileEntity)
+        const fileEntity = fileRepository.create(fileData as object)
+        await fileRepository.save(fileEntity)
 
         return res.status(200).send({
             public_id: result.public_id,
             url: result.secure_url,
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ error: 'Could not upload file.' });
     }
 };
@@ -64,7 +65,7 @@ export const downloadService = async (req: Request, res: Response) => {
     const { fileId } = req.params;
 
     try {
-        const file = await dataSource.getRepository(File).findOne({ where: { publicId: fileId }} as object)
+        const file = await fileRepository.findOne({ where: { publicId: fileId }} as object)
 
         if(!file)
             return res.status(400).json({ message: 'File not found'});
@@ -79,7 +80,6 @@ export const downloadService = async (req: Request, res: Response) => {
         return res.redirect(publicUrl);
 
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ error: 'Could not retrieve the file.' });
     }
 };
@@ -89,7 +89,7 @@ export const markAsUnsafeAndDeleteService = async (req: Request, res: Response) 
     const adminId = (req as any).user.userId
 
     try {
-        const file = await dataSource.getRepository(File).findOne({
+        const file = await fileRepository.findOne({
             where: { publicId: fileId, deleted_at: null },
         }  as object);
 
@@ -101,14 +101,14 @@ export const markAsUnsafeAndDeleteService = async (req: Request, res: Response) 
         if (!file.markedBy.includes(adminId)) {
             file.markedBy.push(adminId);
             file.status = FileStatus.UNSAFE; 
-            await dataSource.getRepository(File).save(file);
+            await fileRepository.save(file);
         }
 
         const unSafeCount = file.markedBy.length; 
         
         if(unSafeCount == 3) {
             file.softDelete()
-            await dataSource.getRepository(File).save(file);
+            await fileRepository.save(file);
 
             cloudinary.uploader.destroy(fileId, (error, result) => {
                 if (error) {
@@ -124,7 +124,6 @@ export const markAsUnsafeAndDeleteService = async (req: Request, res: Response) 
     
 
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ error: 'Could not mark as unsafe and delete the file.' });
     }
 }
@@ -140,7 +139,7 @@ export const getAllUploadsService = async (req: Request, res: Response)  => {
 
     try {
 
-        const files = await dataSource.getRepository(File).find({ 
+        const files = await fileRepository.find({ 
             where : condition,
             skip: pageNumber && recordsPerPage ? (pageNumber - 1) * recordsPerPage : 0,
             take: recordsPerPage ?? 10,
@@ -149,7 +148,6 @@ export const getAllUploadsService = async (req: Request, res: Response)  => {
         return res.status(200).json({ message: 'All Users files fetched', files });
 
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ error: 'Could not fetch files.' });
     }
 }
@@ -163,7 +161,7 @@ export const getUserFileHistoryService = async (req: Request, res: Response)  =>
 
 
     try {
-        const userModel = await dataSource.getRepository(User).findOneBy({
+        const userModel = await userRepository.findOneBy({
             id: user.userId,
         } as object)
 
@@ -174,7 +172,7 @@ export const getUserFileHistoryService = async (req: Request, res: Response)  =>
         if (status) condition.status = status
         condition.user = userModel
         
-        const files = await dataSource.getRepository(File).find({ 
+        const files = await fileRepository.find({ 
             where: condition,
             skip: pageNumber && recordsPerPage ? (pageNumber - 1) * recordsPerPage : 0,
             take: recordsPerPage ?? 10,
@@ -183,7 +181,6 @@ export const getUserFileHistoryService = async (req: Request, res: Response)  =>
         return res.status(200).json({ message: 'All Files fetched', files });
 
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ error: 'Could not fetch files.' });
     }
 }
@@ -191,7 +188,7 @@ export const getUserFileHistoryService = async (req: Request, res: Response)  =>
 export const streamVideoAndAudioService = async (req: Request, res: Response)  => {
     const { fileId } = req.params;
     try {
-        const file = await dataSource.getRepository(File).findOne({ where: { publicId: fileId }} as object)
+        const file = await fileRepository.findOne({ where: { publicId: fileId }} as object)
 
         if(!file)
             return res.status(400).json({ message: 'File not found'});
@@ -206,7 +203,6 @@ export const streamVideoAndAudioService = async (req: Request, res: Response)  =
         request.get(file.url as string).pipe(res);
 
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ error: 'Could not stream media.' });
     }
 }

@@ -6,7 +6,7 @@ import {
     getAllUploadsService,
     streamVideoAndAudioService,
     getUserFileHistoryService
- } from '../services/file/file.service'
+ } from '../services/file.service'
 
 export const upload = async (req: Request, res: Response) => {
     await uploadService(req, res);

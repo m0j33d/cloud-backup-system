@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { 
     createFolderService,
- } from '../services/folder/folder.service'
+ } from '../services/folder.service'
 
 
 export const createFolder = async (req: Request, res: Response) => {
