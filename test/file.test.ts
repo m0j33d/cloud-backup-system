@@ -216,7 +216,7 @@ describe('File Routes', () => {
     });
   });
 
-  describe.only('Stream Video and Audio Service', () => {
+  describe('Stream Video and Audio Service', () => {
     let userFindMock: any;
     let fileFindMock: any;
     let fileSaveMock: any;
@@ -281,6 +281,83 @@ describe('File Routes', () => {
     });
   });
 
+  describe('Get User File History Service', () => {
+    let userFindMock: any;
+    let fileFindMock: any;
+    let fileSaveMock: any;
+
+    beforeEach(() => {
+      userFindMock = sinon.stub(dataSource.getRepository(User), 'findOneBy');
+      fileFindMock = sinon.stub(dataSource.getRepository(File), 'find');
+      fileSaveMock = sinon.stub(dataSource.getRepository(File), 'save');
+    });
+
+    afterEach(() => {
+      userFindMock.restore();
+      fileFindMock.restore();
+      fileSaveMock.restore();
+    });
+
+    it('should fetch user file history', async () => {
+      const user = { userId: 1 };
+      const page = 1;
+      const perPage = 10;
+      const status = 'active'; // Replace with the desired status
+
+      // Mocking the behavior of userRepository.findOneBy to return a user model
+      userFindMock.resolves({ id: user.userId });
+
+      // Mocking the behavior of fileRepository.find to return user's files
+      fileFindMock.resolves([{ /* your file entity data */ }]);
+
+      const response = await request(app)
+        .get('/api/file/history')
+        .set('Authorization', `Bearer ${authToken}`)
+        .query({ page, perPage, status });
+
+      expect(response.status).to.equal(200);
+      expect(response.body).to.have.property('message', 'All Files fetched');
+      expect(response.body).to.have.property('files').to.be.an('array');
+    });
+
+    it('should return a 400 status when the user is not found', async () => {
+      const page = 1;
+      const perPage = 10;
+      const status = 'active'; // Replace with the desired status
+
+      // Mocking userRepository.findOneBy to return null (user not found)
+      userFindMock.resolves(null);
+
+      const response = await request(app)
+        .get('/api/file/history')
+        .set('Authorization', `Bearer ${authToken}`)
+        .query({ page, perPage, status });
+
+      expect(response.status).to.equal(400);
+      expect(response.body).to.have.property('message', 'User Not found');
+    });
+
+    it('should return a 500 status on server error', async () => {
+      const user = { userId: 1 };
+      const page = 1;
+      const perPage = 10;
+      const status = 'active'; // Replace with the desired status
+
+      // Mocking the behavior of userRepository.findOneBy to return a user model
+      userFindMock.resolves({ id: user.userId });
+
+      // Mocking the behavior of fileRepository.find to throw an error
+      fileFindMock.throws(new Error('Database error'));
+
+      const response = await request(app)
+        .get('/api/file/history')
+        .set('Authorization', `Bearer ${authToken}`)
+        .query({ page, perPage, status });
+
+      expect(response.status).to.equal(500);
+      expect(response.body).to.have.property('error', 'Could not fetch files.');
+    });
+  });
 
 })
 

@@ -181,7 +181,6 @@ export const getUserFileHistoryService = async (req: Request, res: Response)  =>
         return res.status(200).json({ message: 'All Files fetched', files });
 
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ error: 'Could not fetch files.' });
     }
 }
