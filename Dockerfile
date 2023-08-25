@@ -16,8 +16,8 @@ COPY . .
 # Build TypeScript code
 RUN npm run build
 
-# Expose the port your app runs on (Express.js default is 3000)
+# Expose the port the app runs on (Express.js default is 3000)
 EXPOSE 3000
 
-# Define the command to run your application
-CMD ["npm", "start"]
+# Define the command to run the application
+CMD ["npm", "run", "start"]

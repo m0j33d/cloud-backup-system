@@ -6,10 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -p .",
-    "start": "npm run build && node dist/index.js",
-    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
-    "migration:generate": "typeorm-ts-node-commonjs -d ./src/data-source.ts migration:generate ./src/migrations/default",
-    "migration:run": "typeorm-ts-node-commonjs -d ./src/data-source.ts migration:run"
+    "start": "node dist/index.js",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
   },
   "author": "Mojeed Adeoye",
   "license": "ISC",
@@ -25,7 +23,6 @@
     "jsonwebtoken": "^9.0.1",
     "multer": "^1.4.5-lts.1",
     "pg": "^8.11.3",
-    "redis": "^4.6.8",
     "reflect-metadata": "^0.1.13",
     "request": "^2.88.2",
     "typeorm": "^0.3.17",
@@ -39,7 +36,6 @@
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^20.5.2",
     "@types/pg": "^8.10.2",
-    "@types/redis": "^4.0.11",
     "@types/request": "^2.48.8",
     "nodemon": "^3.0.1",
     "ts-node": "^10.9.1"
