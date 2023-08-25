@@ -11,7 +11,7 @@ router.get("/ping", (req, res) => {
 });
 
 router.use("/api/auth", authRouter);
-router.use("/api/file", fileRouter);
+router.use("/api/file", authenticate, fileRouter);
 router.use("/api/folder", authenticate, folderRouter);
 
 export default router;

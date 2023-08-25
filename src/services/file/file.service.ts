@@ -8,16 +8,16 @@ import dataSource from '../../data-source';
 import request from 'request'
 
 
-
 dotenv.config();
 
 export const uploadService = async (req: Request, res: Response) => {
     const file = req.files?.file as UploadedFile;
+    const { compress } = req.query;
 
     const MAX_FILE_SIZE_BYTES = 200 * 1024 * 1024; // 200 MB
 
     try {
-        if (!file) {
+        if (!file) { 
             return res.status(400).json({ message: "No File Selected" });
         }
 
@@ -29,6 +29,7 @@ export const uploadService = async (req: Request, res: Response) => {
         const result = await cloudinary.uploader.upload(`${file.tempFilePath}`, {
             public_id: `${Date.now()}`,
             resource_type: "auto",
+            quality: compress ? 'auto:low' : 'auto'
         });
 
         const user = (req as any).user
@@ -40,7 +41,7 @@ export const uploadService = async (req: Request, res: Response) => {
             fileName: file.name,
             fileSize: file.size,
             mimeType: file.mimetype,
-            userId: user.userId as number,
+            userId: user?.userId as number,
             publicId: result.public_id,
             url: result.secure_url,
             user: userModel
@@ -63,6 +64,15 @@ export const downloadService = async (req: Request, res: Response) => {
     const { fileId } = req.params;
 
     try {
+        const file = await dataSource.getRepository(File).findOne({ where: { publicId: fileId }} as object)
+
+        if(!file)
+            return res.status(400).json({ message: 'File not found'});
+
+
+        if(file.userId != (req as any).user.userId)
+            return res.status(403).json({ message: 'You are not authorized to download this media'});
+
         const result = await cloudinary.api.resource(fileId);
         const publicUrl = result.secure_url;
 
@@ -120,10 +130,23 @@ export const markAsUnsafeAndDeleteService = async (req: Request, res: Response) 
 }
 
 export const getAllUploadsService = async (req: Request, res: Response)  => {
+    const { page , perPage, status } = req.query;
+
+    const pageNumber = typeof page === 'string' ? parseInt(page) : undefined;
+    const recordsPerPage = typeof perPage === 'string' ? parseInt(perPage) : undefined;
+
+    let condition = {} as any;
+    if (status) condition.status = status
 
     try {
-        const files = await dataSource.getRepository(File).find({ where : { status: FileStatus.SAFE }} )
-        return res.status(200).json({ message: 'All Files fetched', files });
+
+        const files = await dataSource.getRepository(File).find({ 
+            where : condition,
+            skip: pageNumber && recordsPerPage ? (pageNumber - 1) * recordsPerPage : 0,
+            take: recordsPerPage ?? 10,
+        })
+
+        return res.status(200).json({ message: 'All Users files fetched', files });
 
     } catch (error) {
         console.error(error);
@@ -132,7 +155,13 @@ export const getAllUploadsService = async (req: Request, res: Response)  => {
 }
 
 export const getUserFileHistoryService = async (req: Request, res: Response)  => {
+    const { page , perPage, status } = req.query;
     const user = (req as any).user;
+
+    const pageNumber = typeof page === 'string' ? parseInt(page) : undefined;
+    const recordsPerPage = typeof perPage === 'string' ? parseInt(perPage) : undefined;
+
+
     try {
         const userModel = await dataSource.getRepository(User).findOneBy({
             id: user.userId,
@@ -141,8 +170,16 @@ export const getUserFileHistoryService = async (req: Request, res: Response)  =>
         if(!userModel)
             return res.status(400).json({ message: "User Not found" });
 
+        let condition = {} as any;
+        if (status) condition.status = status
+        condition.user = userModel
+        
+        const files = await dataSource.getRepository(File).find({ 
+            where: condition,
+            skip: pageNumber && recordsPerPage ? (pageNumber - 1) * recordsPerPage : 0,
+            take: recordsPerPage ?? 10,
+        } as object)
 
-        const files = await dataSource.getRepository(File).find({ where: { user: userModel }} as object)
         return res.status(200).json({ message: 'All Files fetched', files });
 
     } catch (error) {
@@ -156,14 +193,17 @@ export const streamVideoAndAudioService = async (req: Request, res: Response)  =
     try {
         const file = await dataSource.getRepository(File).findOne({ where: { publicId: fileId }} as object)
 
-        if(file?.userId != (req as any).user.userId)
+        if(!file)
+            return res.status(400).json({ message: 'File not found'});
+
+        if(file.userId != (req as any).user.userId)
             return res.status(403).json({ message: 'You are not authorized to stream this media'});
 
         // Set the appropriate headers for media streaming
-        res.setHeader('Content-Type', file?.mimeType as string);
+        res.setHeader('Content-Type', file.mimeType as string);
 
         // Stream the media from the Cloudinary URL
-        request.get(file?.url as string).pipe(res);
+        request.get(file.url as string).pipe(res);
 
     } catch (error) {
         console.error(error);

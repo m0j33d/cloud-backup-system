@@ -6,10 +6,13 @@ export class Session {
     @PrimaryGeneratedColumn()
     id: number;
 
+    @Column({ default: 'active' })
+    status: string;
+
     @CreateDateColumn()
     created_at: Date;
 
-    // Define the many-to-one relationship with User
+    // Define the one-to-one relationship with User
     @OneToOne(() => User)
     user: User;
 }
