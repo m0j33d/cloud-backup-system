@@ -9,7 +9,7 @@ const redisClient = new Redis({
   } as object);
 
 // Handle Redis connection errors
-redisClient.on('error', (err) => {
+redisClient.on('error', async (err) => {
   console.error(`Redis Error: ${err}`);
 });
 
