@@ -53,7 +53,7 @@ export const revokeUserSessionService = async (req: Request, res: Response) => {
         const user = await userRepository.findOneBy({ id: userId });
 
         if (!user) {
-            return res.status(401).json({ message: 'User not found' });
+            return res.status(400).json({ message: 'User not found' });
         }
     
         await updateOrCreateUserSession(user, SessionStatus.REVOKED)
