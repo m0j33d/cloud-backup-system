@@ -60,6 +60,6 @@ export class File {
     'folder': Folder;
 
     // Define the many-to-one relationship with User
-    @ManyToOne(() => User, (user) => user.file)
+    @ManyToOne(() => User)
     user: User;
 }

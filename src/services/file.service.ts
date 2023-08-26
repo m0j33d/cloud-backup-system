@@ -184,6 +184,7 @@ export const getUserFileHistoryService = async (req: Request, res: Response) => 
 
         const files = await fileRepository.find({
             where: condition,
+            relations: ['folder'],
             skip: pageNumber && recordsPerPage ? (pageNumber - 1) * recordsPerPage : 0,
             take: recordsPerPage ?? 10,
         } as object)
@@ -221,7 +222,7 @@ export const streamVideoAndAudioService = async (req: Request, res: Response) =>
 export const getSingleUploadService = async (req: Request, res: Response) => {
     const { fileSlug } = req.params;
     try {
-        const file = await fileRepository.findOne({ where: { fileSlug: fileSlug, deleted_at: null } } as object)
+        const file = await fileRepository.findOne({ where: { fileSlug: fileSlug, deleted_at: null }, relations: ['folder', 'user']} as object)
 
         if (!file)
             return res.status(400).json({ message: 'File not found' });
