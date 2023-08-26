@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany } from 'typeorm';
 import { User } from './users.entity';
+import { File } from './file.entity';
 
 @Entity()
 export class Folder {
@@ -21,4 +22,7 @@ export class Folder {
     // Define the many-to-one relationship with User
     @ManyToOne(() => User)
     user: User;
+
+    @OneToMany(() => File, file => file.folder)
+    files: File[];
 }
