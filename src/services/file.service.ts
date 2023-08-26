@@ -61,8 +61,10 @@ export const uploadService = async (req: Request, res: Response) => {
 
         const fileEntity = fileRepository.create(fileData as object)
         const fileResult = await fileRepository.save(fileEntity)
+        const filesWithoutPassword = classToPlain(fileResult);
 
-        return res.status(200).json({ message: "File uploaded Succesfully", file: fileResult });
+
+        return res.status(200).json({ message: "File uploaded Succesfully", file: filesWithoutPassword });
     } catch (error) {
         return res.status(500).json({ error: 'Could not upload file.' });
     }
