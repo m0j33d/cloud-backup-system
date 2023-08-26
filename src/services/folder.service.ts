@@ -2,12 +2,8 @@ import { Request, Response } from 'express';
 import cloudinary from '../config/cloudinary';
 import dotenv from "dotenv";
 import { Folder } from "../entities/folder.entity";
-import { User } from "../entities/users.entity";
-import { File } from "../entities/file.entity";
 import dataSource from '../data-source'
 import generateSlug from '../utils/generateSlug';
-import { NotFoundException } from '../exceptions/NotFountException';
-import { UnauthorizedException } from '../exceptions/UnauthorizedException';
 
 
 dotenv.config();

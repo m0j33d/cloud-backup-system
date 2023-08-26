@@ -3,6 +3,7 @@ import cloudinary from '../config/cloudinary';
 import dotenv from "dotenv";
 import { UploadedFile } from 'express-fileupload';
 import { File, FileStatus } from "../entities/file.entity";
+import { Folder } from "../entities/folder.entity";
 import { User } from "../entities/users.entity";
 import dataSource from '../data-source';
 import request from 'request'
@@ -11,10 +12,12 @@ import request from 'request'
 dotenv.config();
 const userRepository = dataSource.getRepository(User);
 const fileRepository = dataSource.getRepository(File);
+const folderRepository = dataSource.getRepository(Folder);
 
 export const uploadService = async (req: Request, res: Response) => {
     const file = req.files?.file as UploadedFile;
     const { compress } = req.query;
+    const { folderSlug } = req.body;
 
     const MAX_FILE_SIZE_BYTES = 200 * 1024 * 1024; // 200 MB
 
@@ -26,7 +29,7 @@ export const uploadService = async (req: Request, res: Response) => {
         // Check the file size
         if (file.size > MAX_FILE_SIZE_BYTES) {
             return res.status(400).json({ message: 'File size exceeds the maximum allowed limit' });
-        }
+        }            
 
         const result = await cloudinary.uploader.upload(`${file.tempFilePath}`, {
             public_id: `${Date.now()}`,
@@ -39,6 +42,11 @@ export const uploadService = async (req: Request, res: Response) => {
             id: user.userId,
         } as object)
 
+        let folder = null;
+        if(folderSlug){
+            folder = await folderRepository.findOne({ where: { slug: folderSlug }} as object)
+        }
+
         const fileData = {
             fileName: file.name,
             fileSize: file.size,
@@ -46,7 +54,8 @@ export const uploadService = async (req: Request, res: Response) => {
             userId: user?.userId as number,
             fileSlug: result.public_id,
             url: result.secure_url,
-            user: userModel
+            user: userModel,
+            folder: folder
         };
           
         const fileEntity = fileRepository.create(fileData as object)
