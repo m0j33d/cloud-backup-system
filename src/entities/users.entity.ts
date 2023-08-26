@@ -23,6 +23,7 @@ export class User {
     password: string;
 
     @Column({ default: true })
+    @Exclude({ toPlainOnly: true })
     isActive: boolean
 
     @Column({
