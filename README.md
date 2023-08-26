@@ -33,7 +33,7 @@ The is the API for a cloud backup system
 
 ### API Documentation
 This API is documented using Postman
-- Postman Documentation Link: [documentation link](https://cloud-backup-system.onrender.com)
+- Postman Documentation Link: [documentation link](https://documenter.getpostman.com/view/21155667/2s9Y5Wyiox)
 
 
 ## Contact
