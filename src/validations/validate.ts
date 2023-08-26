@@ -9,18 +9,18 @@ export const registerValidation = () => {
             .notEmpty()
             .isString()
             .withMessage('Full name must be a String'),
-        body('email') 
+        body('email')
             .isEmail()
             .withMessage('Please enter a valid email.')
             .custom((value, { req }) => {
-              return dataSource.getRepository(User).findOneBy({ email: value }).then(userDoc => {
-                if (userDoc) {
-                  return Promise.reject(
-                    'User exists already!'
-                  );
-                }
-              });
-            })            
+                return dataSource.getRepository(User).findOneBy({ email: value }).then(userDoc => {
+                    if (userDoc) {
+                        return Promise.reject(
+                            'User exists already!'
+                        );
+                    }
+                });
+            })
             .normalizeEmail(),
         body('password')
             .isLength({ min: 8 })
@@ -31,9 +31,9 @@ export const registerValidation = () => {
 
 export const loginValidation = () => {
     return [
-        body('email') 
+        body('email')
             .isEmail()
-            .withMessage('Please enter a valid email.')        
+            .withMessage('Please enter a valid email.')
             .normalizeEmail(),
         body('password')
             .isLength({ min: 7 })
@@ -43,10 +43,12 @@ export const loginValidation = () => {
 }
 
 
-export const validate = (req: Request, res: Response, next: NextFunction)  => {
+export const validate = (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req)
     if (errors.isEmpty()) {
         return next()
     }
-    return res.status(400).json({ errors: errors.array() });
+    const errorMessages = errors.array().map(error => error.msg);
+    return res.status(400).json({ message: "Invalid input provided", errors: errorMessages });
+
 }
