@@ -3,7 +3,17 @@
 The is the API for a cloud backup system 
 
 ### Links
-- Live Site URL: [live link](https://link-scissors.onrender.com/)
+- Live API URL: [live link](https://cloud-backup-system.onrender.com)
+
+
+### Technologies used:
+- `NodeJs (TypeScript & Express)`
+- `PostgreSQL` database
+- `Cloudinary` cloud storage service
+- `Redis` used for rate limiting
+- `Docker` for containerization
+- `Mocha, chai & sinon` for testing
+
 
 ### How to setup app
 - Rename the `.env.example` to `.env` and add the correct values
