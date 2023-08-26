@@ -6,13 +6,13 @@ The is the API for a cloud backup system
 - Live API URL: [live link](https://cloud-backup-system.onrender.com)
 
 
-### Technologies used:
+### Technologies:
 - `NodeJs (TypeScript & Express)`
 - `PostgreSQL` database
 - `Cloudinary` cloud storage service
 - `Redis` used for rate limiting
 - `Docker` for containerization
-- `Mocha, chai & sinon` for testing
+- `Mocha, chai & sinon` for unit testing
 
 
 ### How to setup app
