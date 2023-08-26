@@ -11,7 +11,7 @@ const adminRouter = express.Router();
 
 adminRouter.post("/revoke-session", revokeUserSession);
 
-adminRouter.put("/status/:fileId", markAsUnsafeAndDelete)
+adminRouter.put("/status/:fileSlug", markAsUnsafeAndDelete)
 
 adminRouter.get("/uploads", getAllUploads)
 

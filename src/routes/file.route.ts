@@ -11,8 +11,8 @@ import {
 const fileRouter = express.Router();
 
 fileRouter.post("/upload", upload);
-fileRouter.get("/download/:fileId",  download);
-fileRouter.get("/stream/:fileId", streamMedia);
+fileRouter.get("/download/:fileSlug",  download);
+fileRouter.get("/stream/:fileSlug", streamMedia);
 fileRouter.get("/history", getUserFileHistory);
 
 export default fileRouter;

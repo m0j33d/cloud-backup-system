@@ -22,7 +22,7 @@ export class File {
     userId: number;
 
     @Column({ unique: true })
-    publicId: string
+    fileSlug: string
 
     @Column({ unique: true })
     url: string

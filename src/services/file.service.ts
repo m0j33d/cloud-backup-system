@@ -44,7 +44,7 @@ export const uploadService = async (req: Request, res: Response) => {
             fileSize: file.size,
             mimeType: file.mimetype,
             userId: user?.userId as number,
-            publicId: result.public_id,
+            fileSlug: result.public_id,
             url: result.secure_url,
             user: userModel
         };
@@ -52,20 +52,17 @@ export const uploadService = async (req: Request, res: Response) => {
         const fileEntity = fileRepository.create(fileData as object)
         await fileRepository.save(fileEntity)
 
-        return res.status(200).send({
-            public_id: result.public_id,
-            url: result.secure_url,
-        });
+        return res.status(200).send(fileEntity);
     } catch (error) {
         return res.status(500).json({ error: 'Could not upload file.' });
     }
 };
 
 export const downloadService = async (req: Request, res: Response) => {
-    const { fileId } = req.params;
+    const { fileSlug } = req.params;
 
     try {
-        const file = await fileRepository.findOne({ where: { publicId: fileId }} as object)
+        const file = await fileRepository.findOne({ where: { fileSlug: fileSlug }} as object)
 
         if(!file)
             return res.status(400).json({ message: 'File not found'});
@@ -74,7 +71,7 @@ export const downloadService = async (req: Request, res: Response) => {
         if(file.userId != (req as any).user.userId)
             return res.status(403).json({ message: 'You are not authorized to download this media'});
 
-        const result = await cloudinary.api.resource(fileId);
+        const result = await cloudinary.api.resource(fileSlug);
         const publicUrl = result.secure_url;
 
         return res.redirect(publicUrl);
@@ -85,12 +82,12 @@ export const downloadService = async (req: Request, res: Response) => {
 };
 
 export const markAsUnsafeAndDeleteService = async (req: Request, res: Response)  => {
-    const { fileId } = req.params;
+    const { fileSlug } = req.params;
     const adminId = (req as any).user.userId
 
     try {
         const file = await fileRepository.findOne({
-            where: { publicId: fileId, deleted_at: null },
+            where: { fileSlug: fileSlug, deleted_at: null },
         }  as object);
 
         if (!file)
@@ -110,7 +107,7 @@ export const markAsUnsafeAndDeleteService = async (req: Request, res: Response) 
             file.softDelete()
             await fileRepository.save(file);
 
-            cloudinary.uploader.destroy(fileId, (error, result) => {
+            cloudinary.uploader.destroy(fileSlug, (error, result) => {
                 if (error) {
                     throw new Error(error)
                 }
@@ -186,9 +183,9 @@ export const getUserFileHistoryService = async (req: Request, res: Response)  =>
 }
 
 export const streamVideoAndAudioService = async (req: Request, res: Response)  => {
-    const { fileId } = req.params;
+    const { fileSlug } = req.params;
     try {
-        const file = await fileRepository.findOne({ where: { publicId: fileId }} as object)
+        const file = await fileRepository.findOne({ where: { fileSlug: fileSlug }} as object)
 
         if(!file)
             return res.status(400).json({ message: 'File not found'});

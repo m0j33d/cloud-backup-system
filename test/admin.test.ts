@@ -191,14 +191,14 @@ describe('Admin Routes', () => {
     });
 
     it('should mark the file as unsafe and delete it when marked by 3 admins', async () => {
-      const fileId = 'file123';
+      const fileSlug = 'file123';
       const adminId = 1;
 
       userFindMock.resolves({ id: adminId, userType: 'admin' });
 
       // Mocking the behavior of fileRepository.findOne to return a file
       fileFindMock.resolves({
-        publicId: fileId,
+        fileSlug: fileSlug,
         markedBy: [adminId, adminId, adminId], // Simulating marked by 3 admins
         status: 'SAFE',
         softDelete: () => { }, // Mocking the softDelete method
@@ -210,7 +210,7 @@ describe('Admin Routes', () => {
       cloudinaryUploaderDestroyStub.yields(null, {});
 
       const response = await request(app)
-        .put(`/api/admin/status/${fileId}`)
+        .put(`/api/admin/status/${fileSlug}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({});
 
@@ -219,21 +219,21 @@ describe('Admin Routes', () => {
     });
 
     it('should mark the file as unsafe when marked by less than 3 admins', async () => {
-      const fileId = 'file123';
+      const fileSlug = 'file123';
       const adminId = 1;
 
       userFindMock.resolves({ id: adminId, userType: 'admin' });
 
       // Mocking the behavior of fileRepository.findOne to return a file
       fileFindMock.resolves({
-        publicId: fileId,
+        fileSlug: fileSlug,
         markedBy: [adminId], // Simulating marked by 1 admin
         status: 'SAFE',
         softDelete: () => { }, // Mocking the softDelete method
       });
 
       const response = await request(app)
-        .put(`/api/admin/status/${fileId}`)
+        .put(`/api/admin/status/${fileSlug}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({});
 
@@ -242,7 +242,7 @@ describe('Admin Routes', () => {
     });
 
     it('should return a 400 status when the file is not found', async () => {
-      const fileId = 'nonexistent-file-id';
+      const fileSlug = 'nonexistent-file-id';
 
       userFindMock.resolves({ id: 1, userType: 'admin' });
 
@@ -250,7 +250,7 @@ describe('Admin Routes', () => {
       fileFindMock.resolves(null);
 
       const response = await request(app)
-        .put(`/api/admin/status/${fileId}`)
+        .put(`/api/admin/status/${fileSlug}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({});
 
@@ -259,7 +259,7 @@ describe('Admin Routes', () => {
     });
 
     it('should return a 403 status when the requesting user is not admin', async () => {
-      const fileId = 'nonexistent-file-id';
+      const fileSlug = 'nonexistent-file-id';
 
       userFindMock.resolves({ id: 1, userType: 'user' });
 
@@ -267,7 +267,7 @@ describe('Admin Routes', () => {
       fileFindMock.resolves(null);
 
       const response = await request(app)
-        .put(`/api/admin/status/${fileId}`)
+        .put(`/api/admin/status/${fileSlug}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({});
 
@@ -275,7 +275,7 @@ describe('Admin Routes', () => {
     });
 
     it('should return a 401 status when the user is not authenticated', async () => {
-      const fileId = 'nonexistent-file-id';
+      const fileSlug = 'nonexistent-file-id';
 
       userFindMock.resolves({ id: 1, userType: 'admin' });
 
@@ -283,14 +283,14 @@ describe('Admin Routes', () => {
       fileFindMock.resolves(null);
 
       const response = await request(app)
-        .put(`/api/admin/status/${fileId}`)
+        .put(`/api/admin/status/${fileSlug}`)
         .send({});
 
       expect(response.status).to.equal(401);
     });
 
     it('should return a 500 status on server error', async () => {
-      const fileId = 'file123';
+      const fileSlug = 'file123';
       const adminId = 1;
 
       userFindMock.resolves({ id: adminId, userType: 'admin' });
@@ -299,7 +299,7 @@ describe('Admin Routes', () => {
       fileFindMock.throws(new Error('Database error'));
 
       const response = await request(app)
-        .put(`/api/admin/status/${fileId}`)
+        .put(`/api/admin/status/${fileSlug}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({});
 

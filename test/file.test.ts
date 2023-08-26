@@ -52,7 +52,7 @@ describe('File Routes', () => {
       };
 
       // Mocking the behavior of cloudinary.uploader.upload to return a result
-      cloudinaryUploaderUploadStub.resolves({ public_id: 'file123', secure_url: 'https://example.com/file123' });
+      cloudinaryUploaderUploadStub.resolves({ fileSlug: 'file123', secure_url: 'https://example.com/file123' });
 
       // Mocking the behavior of userRepository.findOneBy to return a user model
       userFindMock.resolves({ id: user.userId });
@@ -74,7 +74,7 @@ describe('File Routes', () => {
         .attach('file', `${uploadDir}/${file.originalname}`) // Attach the file to the request
 
       expect(response.status).to.equal(200);
-      expect(response.body).to.have.property('public_id', 'file123');
+      expect(response.body).to.have.property('fileSlug', 'file123');
       expect(response.body).to.have.property('url', 'https://example.com/file123');
     });
 
@@ -156,7 +156,7 @@ describe('File Routes', () => {
     });
 
     it('should redirect to the file URL when file exists and user is authorized', async () => {
-      const fileId = 'file123';
+      const fileSlug = 'file123';
       const user = { userId: 1 };
 
       // Mocking the behavior of fileRepository.findOne to return a file
@@ -166,7 +166,7 @@ describe('File Routes', () => {
       cloudinaryApiResourceStub.resolves({ secure_url: 'https://example.com/file123' });
 
       const response = await request(app)
-        .get(`/api/file/download/${fileId}`)
+        .get(`/api/file/download/${fileSlug}`)
         .set('Authorization', `Bearer ${authToken}`)
 
       expect(response.status).to.equal(302); // Expecting a redirect
@@ -174,13 +174,13 @@ describe('File Routes', () => {
     });
 
     it('should return a 400 status when the file is not found', async () => {
-      const fileId = 'nonexistent-file-id';
+      const fileSlug = 'nonexistent-file-id';
 
       // Mocking fileRepository.findOne to return null (file not found)
       fileFindMock.resolves(null);
 
       const response = await request(app)
-        .get(`/api/file/download/${fileId}`)
+        .get(`/api/file/download/${fileSlug}`)
         .set('Authorization', `Bearer ${authToken}`)
 
       expect(response.status).to.equal(400);
@@ -188,13 +188,13 @@ describe('File Routes', () => {
     });
 
     it('should return a 403 status when the user is not authorized', async () => {
-      const fileId = 'file123';
+      const fileSlug = 'file123';
 
       // Mocking the behavior of fileRepository.findOne to return a file with a different user ID
       fileFindMock.resolves({ userId: 2 });
 
       const response = await request(app)
-        .get(`/api/file/download/${fileId}`)
+        .get(`/api/file/download/${fileSlug}`)
         .set('Authorization', `Bearer ${authToken}`)
 
       expect(response.status).to.equal(403);
@@ -202,13 +202,13 @@ describe('File Routes', () => {
     });
 
     it('should return a 500 status on server error', async () => {
-      const fileId = 'file123';
+      const fileSlug = 'file123';
 
       // Mocking the behavior of fileRepository.findOne to throw an error
       fileFindMock.throws(new Error('Database error'));
 
       const response = await request(app)
-        .get(`/api/file/download/${fileId}`)
+        .get(`/api/file/download/${fileSlug}`)
         .set('Authorization', `Bearer ${authToken}`)
 
       expect(response.status).to.equal(500);
@@ -238,13 +238,13 @@ describe('File Routes', () => {
 
 
     it('should return a 400 status when the file is not found', async () => {
-      const fileId = 'nonexistent-file-id';
+      const fileSlug = 'nonexistent-file-id';
 
       // Mocking fileRepository.findOne to return null (file not found)
       fileFindMock.resolves(null);
 
       const response = await request(app)
-        .get(`/api/file/stream/${fileId}`)
+        .get(`/api/file/stream/${fileSlug}`)
         .set('Authorization', `Bearer ${authToken}`)
 
       expect(response.status).to.equal(400);
@@ -252,13 +252,13 @@ describe('File Routes', () => {
     });
 
     it('should return a 403 status when the user is not authorized', async () => {
-      const fileId = 'file123';
+      const fileSlug = 'file123';
 
       // Mocking the behavior of fileRepository.findOne to return a file with a different user ID
       fileFindMock.resolves({ userId: 2 });
 
       const response = await request(app)
-        .get(`/api/file/stream/${fileId}`)
+        .get(`/api/file/stream/${fileSlug}`)
         .set('Authorization', `Bearer ${authToken}`)
 
       expect(response.status).to.equal(403);
@@ -266,14 +266,14 @@ describe('File Routes', () => {
     });
 
     it('should return a 500 status on server error', async () => {
-      const fileId = 'file123';
+      const fileSlug = 'file123';
       const user = { userId: 1 };
 
       // Mocking the behavior of fileRepository.findOne to throw an error
       fileFindMock.throws(new Error('Database error'));
 
       const response = await request(app)
-        .get(`/api/file/stream/${fileId}`)
+        .get(`/api/file/stream/${fileSlug}`)
         .set('Authorization', `Bearer ${authToken}`)
 
       expect(response.status).to.equal(500);
