@@ -7,6 +7,7 @@ import { Folder } from "../entities/folder.entity";
 import { User } from "../entities/users.entity";
 import dataSource from '../data-source';
 import request from 'request'
+import { classToPlain } from 'class-transformer';
 
 
 dotenv.config();
@@ -156,7 +157,9 @@ export const getAllUploadsService = async (req: Request, res: Response) => {
             take: recordsPerPage ?? 10,
         })
 
-        return res.status(200).json({ message: 'All Users files fetched', files });
+        const filesWithoutPassword = classToPlain(files);
+
+        return res.status(200).json({ message: 'All Users files fetched', files: filesWithoutPassword });
 
     } catch (error) {
         return res.status(500).json({ error: 'Could not fetch files.' });
@@ -223,12 +226,14 @@ export const streamVideoAndAudioService = async (req: Request, res: Response) =>
 export const getSingleUploadService = async (req: Request, res: Response) => {
     const { fileSlug } = req.params;
     try {
-        const file = await fileRepository.findOne({ where: { fileSlug: fileSlug, deleted_at: null }, relations: ['folder', 'user']} as object)
+        const file = await fileRepository.findOne({ where: { fileSlug: fileSlug, deleted_at: null }, relations: ['folder', 'user'] } as object)
 
         if (!file)
             return res.status(400).json({ message: 'File not found' });
 
-       return res.status(200).json({ message: "File retrieved", file })
+        const fileWithoutPassword = classToPlain(file);
+
+        return res.status(200).json({ message: "File retrieved", file: fileWithoutPassword })
 
     } catch (error) {
         return res.status(500).json({ error: 'Could not fetch file.' });

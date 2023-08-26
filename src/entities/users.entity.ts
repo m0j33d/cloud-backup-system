@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { File } from './file.entity';
+import { Exclude } from 'class-transformer';
 
 enum UserType {
     USER = 'user',
@@ -18,6 +19,7 @@ export class User {
     email: string;
 
     @Column()
+    @Exclude({ toPlainOnly: true })
     password: string;
 
     @Column({ default: true })
@@ -28,6 +30,7 @@ export class User {
         enum: UserType,
         default: UserType.USER,
     })
+    @Exclude({ toPlainOnly: true })
     userType: UserType;
 
     // Establish a one-to-many relationship with File
