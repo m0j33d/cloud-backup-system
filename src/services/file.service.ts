@@ -151,6 +151,7 @@ export const getAllUploadsService = async (req: Request, res: Response) => {
 
         const files = await fileRepository.find({
             where: condition,
+            relations: ['folder', 'user'],
             skip: pageNumber && recordsPerPage ? (pageNumber - 1) * recordsPerPage : 0,
             take: recordsPerPage ?? 10,
         })
