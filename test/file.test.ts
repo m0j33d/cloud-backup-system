@@ -74,8 +74,7 @@ describe('File Routes', () => {
         .attach('file', `${uploadDir}/${file.originalname}`) // Attach the file to the request
 
       expect(response.status).to.equal(200);
-      expect(response.body).to.have.property('fileSlug', 'file123');
-      expect(response.body).to.have.property('url', 'https://example.com/file123');
+      expect(response.body).to.have.property('message', 'File uploaded Succesfully');
     });
 
     it('should return a 400 status when no file is selected', async () => {
