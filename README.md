@@ -31,6 +31,11 @@ The is the API for a cloud backup system
  npm run test
 ```
 
+### API Documentation
+This API is documented using Postman
+- Postman Documentation Link: [documentation link](https://cloud-backup-system.onrender.com)
+
+
 ## Contact
 
 E-mail: [mojeedeji@gmail.com](mojeedeji@gmail.com 'Send an email')\

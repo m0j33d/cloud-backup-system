@@ -31,7 +31,7 @@ export const createFolderService = async (req: Request, res: Response) => {
         const folderEntity = folderRepository.create(folderData as object)
         await folderRepository.save(folderEntity)
 
-        return res.status(201).json({ message: 'Folder created', folder });
+        return res.status(201).json({ message: 'Folder created', folder: folderEntity });
 
     } catch (error) {
         return res.status(500).json({ error: 'Could not create the folder.' });
