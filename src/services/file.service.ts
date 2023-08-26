@@ -22,14 +22,14 @@ export const uploadService = async (req: Request, res: Response) => {
     const MAX_FILE_SIZE_BYTES = 200 * 1024 * 1024; // 200 MB
 
     try {
-        if (!file) { 
+        if (!file) {
             return res.status(400).json({ message: "No File Selected" });
         }
 
         // Check the file size
         if (file.size > MAX_FILE_SIZE_BYTES) {
             return res.status(400).json({ message: 'File size exceeds the maximum allowed limit' });
-        }            
+        }
 
         const result = await cloudinary.uploader.upload(`${file.tempFilePath}`, {
             public_id: `${Date.now()}`,
@@ -43,8 +43,8 @@ export const uploadService = async (req: Request, res: Response) => {
         } as object)
 
         let folder = null;
-        if(folderSlug){
-            folder = await folderRepository.findOne({ where: { slug: folderSlug }} as object)
+        if (folderSlug) {
+            folder = await folderRepository.findOne({ where: { slug: folderSlug } } as object)
         }
 
         const fileData = {
@@ -57,11 +57,11 @@ export const uploadService = async (req: Request, res: Response) => {
             user: userModel,
             folder: folder
         };
-          
+
         const fileEntity = fileRepository.create(fileData as object)
         const fileResult = await fileRepository.save(fileEntity)
 
-        return res.status(200).json({ message: "File uploaded Succesfully", file: fileResult});
+        return res.status(200).json({ message: "File uploaded Succesfully", file: fileResult });
     } catch (error) {
         return res.status(500).json({ error: 'Could not upload file.' });
     }
@@ -71,14 +71,14 @@ export const downloadService = async (req: Request, res: Response) => {
     const { fileSlug } = req.params;
 
     try {
-        const file = await fileRepository.findOne({ where: { fileSlug: fileSlug }} as object)
+        const file = await fileRepository.findOne({ where: { fileSlug: fileSlug } } as object)
 
-        if(!file)
-            return res.status(400).json({ message: 'File not found'});
+        if (!file)
+            return res.status(400).json({ message: 'File not found' });
 
 
-        if(file.userId != (req as any).user.userId)
-            return res.status(403).json({ message: 'You are not authorized to download this media'});
+        if (file.userId != (req as any).user.userId)
+            return res.status(403).json({ message: 'You are not authorized to download this media' });
 
         const result = await cloudinary.api.resource(fileSlug);
         const publicUrl = result.secure_url;
@@ -90,14 +90,14 @@ export const downloadService = async (req: Request, res: Response) => {
     }
 };
 
-export const markAsUnsafeAndDeleteService = async (req: Request, res: Response)  => {
+export const markAsUnsafeAndDeleteService = async (req: Request, res: Response) => {
     const { fileSlug } = req.params;
     const adminId = (req as any).user.userId
 
     try {
         const file = await fileRepository.findOne({
             where: { fileSlug: fileSlug, deleted_at: null },
-        }  as object);
+        } as object);
 
         if (!file)
             return res.status(400).json({ message: "File not found" });
@@ -106,13 +106,17 @@ export const markAsUnsafeAndDeleteService = async (req: Request, res: Response) 
 
         if (!file.markedBy.includes(adminId)) {
             file.markedBy.push(adminId);
-            file.status = FileStatus.UNSAFE; 
+            file.status = FileStatus.UNSAFE;
             await fileRepository.save(file);
         }
 
-        const unSafeCount = file.markedBy.length; 
-        
-        if(unSafeCount == 3) {
+        const unSafeCount = file.markedBy.length;
+
+        if (unSafeCount > 3)
+            return res.status(200).json({ message: 'File has already been deleted' });
+
+
+        if (unSafeCount >= 3) {
             file.softDelete()
             await fileRepository.save(file);
 
@@ -126,16 +130,16 @@ export const markAsUnsafeAndDeleteService = async (req: Request, res: Response) 
 
         return res.status(200).json({
             message: `File marked as unsafe successfully. Waiting for ${3 - unSafeCount} admins(s) before deleting file`
-         });
-    
+        });
+
 
     } catch (error) {
         return res.status(500).json({ error: 'Could not mark as unsafe and delete the file.' });
     }
 }
 
-export const getAllUploadsService = async (req: Request, res: Response)  => {
-    const { page , perPage, status } = req.query;
+export const getAllUploadsService = async (req: Request, res: Response) => {
+    const { page, perPage, status } = req.query;
 
     const pageNumber = typeof page === 'string' ? parseInt(page) : undefined;
     const recordsPerPage = typeof perPage === 'string' ? parseInt(perPage) : undefined;
@@ -145,8 +149,8 @@ export const getAllUploadsService = async (req: Request, res: Response)  => {
 
     try {
 
-        const files = await fileRepository.find({ 
-            where : condition,
+        const files = await fileRepository.find({
+            where: condition,
             skip: pageNumber && recordsPerPage ? (pageNumber - 1) * recordsPerPage : 0,
             take: recordsPerPage ?? 10,
         })
@@ -158,8 +162,8 @@ export const getAllUploadsService = async (req: Request, res: Response)  => {
     }
 }
 
-export const getUserFileHistoryService = async (req: Request, res: Response)  => {
-    const { page , perPage, status } = req.query;
+export const getUserFileHistoryService = async (req: Request, res: Response) => {
+    const { page, perPage, status } = req.query;
     const user = (req as any).user;
 
     const pageNumber = typeof page === 'string' ? parseInt(page) : undefined;
@@ -171,14 +175,14 @@ export const getUserFileHistoryService = async (req: Request, res: Response)  =>
             id: user.userId,
         } as object)
 
-        if(!userModel)
+        if (!userModel)
             return res.status(400).json({ message: "User Not found" });
 
         let condition = {} as any;
         if (status) condition.status = status
         condition.user = userModel
-        
-        const files = await fileRepository.find({ 
+
+        const files = await fileRepository.find({
             where: condition,
             skip: pageNumber && recordsPerPage ? (pageNumber - 1) * recordsPerPage : 0,
             take: recordsPerPage ?? 10,
@@ -191,16 +195,16 @@ export const getUserFileHistoryService = async (req: Request, res: Response)  =>
     }
 }
 
-export const streamVideoAndAudioService = async (req: Request, res: Response)  => {
+export const streamVideoAndAudioService = async (req: Request, res: Response) => {
     const { fileSlug } = req.params;
     try {
-        const file = await fileRepository.findOne({ where: { fileSlug: fileSlug }} as object)
+        const file = await fileRepository.findOne({ where: { fileSlug: fileSlug } } as object)
 
-        if(!file)
-            return res.status(400).json({ message: 'File not found'});
+        if (!file)
+            return res.status(400).json({ message: 'File not found' });
 
-        if(file.userId != (req as any).user.userId)
-            return res.status(403).json({ message: 'You are not authorized to stream this media'});
+        if (file.userId != (req as any).user.userId)
+            return res.status(403).json({ message: 'You are not authorized to stream this media' });
 
         // Set the appropriate headers for media streaming
         res.setHeader('Content-Type', file.mimeType as string);
@@ -212,3 +216,20 @@ export const streamVideoAndAudioService = async (req: Request, res: Response)  =
         return res.status(500).json({ error: 'Could not stream media.' });
     }
 }
+
+
+export const getSingleUploadService = async (req: Request, res: Response) => {
+    const { fileSlug } = req.params;
+    try {
+        const file = await fileRepository.findOne({ where: { fileSlug: fileSlug, deleted_at: null } } as object)
+
+        if (!file)
+            return res.status(400).json({ message: 'File not found' });
+
+       return res.status(200).json({ message: "File retrieved", file })
+
+    } catch (error) {
+        return res.status(500).json({ error: 'Could not fetch file.' });
+    }
+}
+

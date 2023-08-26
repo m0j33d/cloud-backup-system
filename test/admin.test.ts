@@ -405,5 +405,72 @@ describe('Admin Routes', () => {
     });
   });
 
+  describe('Get Single Upload Service', () => {
+    let fileFindMock: any;
+    let userFindMock: any;
+
+    beforeEach(() => {
+      userFindMock = sinon.stub(dataSource.getRepository(User), 'findOneBy');
+      fileFindMock = sinon.stub(dataSource.getRepository(File), 'findOne');
+    });
+
+    afterEach(() => {
+      userFindMock.restore();
+      fileFindMock.restore();
+    });
+
+    it('should return the file with the specified slug', async () => {
+      const file = { id: 1, name: 'file1.txt', status: 'SAFE' }
+      const fileSlug = "Slug123"
+
+
+      // Mocking the behavior of fileRepository.find to return files
+      fileFindMock.resolves(file);
+      userFindMock.resolves({ id: 1, userType: 'admin' });
+
+      const response = await request(app)
+        .get(`/api/admin/uploads/${fileSlug}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({});
+
+      expect(response.status).to.equal(200);
+      expect(response.body).to.have.property('file').to.be.an('object');
+    });
+
+
+    it('should return a 400 when file is not found', async () => {
+      const fileSlug = "Slug123"
+
+      // Mocking the behavior of fileRepository.find to return files
+      fileFindMock.resolves(null);
+      userFindMock.resolves({ id: 1, userType: 'admin' });
+
+      const response = await request(app)
+        .get(`/api/admin/uploads/${fileSlug}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .query({ status: 'safe' })
+        .send({});
+
+      expect(response.status).to.equal(400);
+
+    });
+
+    it('should return a 500 status on server error', async () => {
+      const fileSlug = "Slug123"
+
+      // Mocking fileRepository.find to throw an error
+      fileFindMock.throws(new Error('Database error'));
+      userFindMock.resolves({ id: 1, userType: 'admin' });
+
+      const response = await request(app)
+        .get(`/api/admin/uploads/${fileSlug}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({});
+
+      expect(response.status).to.equal(500);
+      expect(response.body).to.have.property('error', 'Could not fetch file.');
+    });
+  });
+
 })
 

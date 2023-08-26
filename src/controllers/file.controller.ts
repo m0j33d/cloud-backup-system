@@ -5,7 +5,8 @@ import {
     markAsUnsafeAndDeleteService,
     getAllUploadsService,
     streamVideoAndAudioService,
-    getUserFileHistoryService
+    getUserFileHistoryService,
+    getSingleUploadService
  } from '../services/file.service'
 
 export const upload = async (req: Request, res: Response) => {
@@ -31,3 +32,7 @@ export const streamMedia = async (req: Request, res: Response) => {
 export const getUserFileHistory = async (req: Request, res: Response) => {
     await getUserFileHistoryService(req, res);
 };
+
+export const getSingleUpload = async (req: Request, res: Response) => {
+    await getSingleUploadService(req, res);
+}
